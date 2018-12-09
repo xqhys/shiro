@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- ================================== 身份认证start ======================================= -->
+    <!-- 凭证匹配器 -->
+    <bean id="hashedCredentialsMatcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+        <!-- md5散列算法-->
+        <property name="hashAlgorithmName" value="md5"/>
+        <!-- 散列迭代次数 -->
+        <property name="hashIterations" value="2"/>
+        <!-- 存储散列后的密码为16进制，默认是base64 -->
+        <property name="storedCredentialsHexEncoded" value="true"/>
+    </bean>
+
+    <!-- 安全数据来源（本地身份认证） -->
+    <bean id="sampleReaml" class="com.hys.login.manager.SampleReaml" >
+        <property name="credentialsMatcher" ref="hashedCredentialsMatcher"/>
+    </bean>
+
+    <!-- 安全数据来源（cas身份认证） -->
+    <bean id="myCasRealm" class="com.hys.login.manager.MyCasRealm" >
+        <property name="casServerUrlPrefix" value="${cas.server}"/>
+        <property name="casService" value="${cas.client}/cas"/>
+    </bean>
+    <!-- ================================== 身份认证end ======================================= -->
+
+    <!-- ================================== 记住我start ======================================= -->
+    <bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <!-- cookie的name -->
+        <constructor-arg value="rememberMe"/>
+        <!-- 设置为true，则客户端不会暴露给客户端脚本代码 -->
+        <property name="httpOnly" value="true"/>
+        <!-- 有效时间30天 -->
+        <property name="maxAge" value="2592000"/>
+    </bean>
+
+    <!-- rememberMe管理器 -->
+    <bean id="rememberMeManager"  class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <!-- cipherKey是加密rememberMe Cookie的密钥；默认AES算法 -->
+        <property name="cipherKey" value="#{T(org.apache.shiro.codec.Base64).decode('4AvVhmFLUs0KTA3Kprsdag==')}"/>
+        <property name="cookie" ref="rememberMeCookie"/>
+    </bean>
+    <!-- ================================== 记住我end ======================================= -->
+
+    <!-- ================================== 会话管理start ======================================= -->
+    <!-- 创建sessionId Cookie的模板 -->
+    <bean id="sessionIdCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <!--cookie的name -->
+        <constructor-arg value="sid_7443"/>
+        <!-- 设置为true，则客户端不会暴露给客户端脚本代码 -->
+        <property name="httpOnly" value="true"/>
+        <!--cookie的有效时间(单位为秒)，-1表示关闭浏览器过期cookie -->
+        <property name="maxAge" value="-1"/>
+    </bean>
+
+    <!-- sessionId生成器 -->
+    <bean id="sessionIdGenerator" class="org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator"/>
+
+    <!-- sessionDAO：提供会话的CRUD -->
+    <bean id="sessionDAO" class="org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO">
+        <!-- 会话缓存名字（默认） -->
+        <property name="activeSessionsCacheName" value="shiro-activeSessionCache"/>
+        <property name="sessionIdGenerator" ref="sessionIdGenerator"/>
+    </bean>
+
+    <!-- 会话验证调度器：定期检查会话是否过期 -->
+    <bean id="sessionValidationScheduler" class="org.apache.shiro.session.mgt.quartz.QuartzSessionValidationScheduler">
+        <!-- 间隔多少时间检查(30分钟),默认60分钟（毫秒为单位） -->
+        <property name="sessionValidationInterval" value="1800000"/>
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <!-- 会话管理器 -->
+    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+        <!-- 会话全局过期时间，默认30分钟（毫秒为单位） -->
+        <property name="globalSessionTimeout" value="1800000"/>
+        <!-- 会话过期时是否删除会话（默认true） -->
+        <property name="deleteInvalidSessions" value="true"/>
+        <!-- 是否开启检测，默认开启 -->
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+        <!-- 是否启用/禁用 Session Id Cookie，默认是启用的 -->
+        <property name="sessionIdCookieEnabled" value="true"/>
+        <property name="sessionDAO" ref="sessionDAO"/>
+        <property name="sessionIdCookie" ref="sessionIdCookie"/>
+        <property name="sessionValidationScheduler" ref="sessionValidationScheduler"/>
+    </bean>
+    <!-- ================================== 会话管理end ======================================= -->
+
+    <!-- 缓存管理器,使用Ehcache实现 -->
+    <bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager ">
+        <property name="cacheManagerConfigFile" value="classpath:ehcache.xml"/>
+    </bean>
+
+    <!-- 如果要实现cas的remember me的功能，需要用到下面这个bean，并设置到securityManager的subjectFactory中 -->
+    <bean id="casSubjectFactory" class="org.apache.shiro.cas.CasSubjectFactory" />
+
+    <!-- 安全管理器 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realms">
+            <list>
+                <ref bean="myCasRealm"/>
+                <ref bean="sampleReaml"/>
+            </list>
+        </property>
+        <property name="rememberMeManager" ref="rememberMeManager"/>
+        <property name="sessionManager" ref="sessionManager"/>
+        <property name="cacheManager" ref="cacheManager"/>
+        <property name="subjectFactory" ref="casSubjectFactory"></property>
+    </bean>
+
+    <!-- 基于form表单的身份验证过滤器（authc：只有通过form表单登陆的身份才允许访问资源） -->
+    <bean id="formAuthenticationFilter" class="org.apache.shiro.web.filter.authc.FormAuthenticationFilter">
+        <property name="usernameParam" value="username"/>
+        <property name="passwordParam" value="password"/>
+        <!-- 登陆地址 -->
+        <property name="loginUrl" value="${cas.server}/login?service=${cas.client}/cas"/>
+        <!-- 成功页面 -->
+        <property name="successUrl" value="/"/>
+        <!-- 禁用authc过滤器（默认开启） -->
+        <property name="enabled" value="true"/>
+    </bean>
+
+    <!-- 退出过滤器 -->
+    <bean id="logoutFilter" class="org.apache.shiro.web.filter.authc.LogoutFilter">
+        <!-- 退出后的重定向地址 -->
+        <property name="redirectUrl" value="${cas.server}/logout?service=${cas.client}" />
+    </bean>
+
+    <!-- cas：拦截回调地址，验证ticket是否有效 -->
+    <bean id="casFilter" class="org.apache.shiro.cas.CasFilter">
+        <!-- 失败页面（ticket无效） -->
+        <property name="failureUrl" value="/casFailure.jsp"/>
+        <!-- 开启cas过滤器 -->
+        <property name="enabled" value="true"/>
+    </bean>
+
+    <!-- 单点退出：拦截回调地址；
+    登陆成功后绑定ticket和session；
+    单点退出时在session中设置退出标记；
+    用户访问资源时有退出标记则调subject.logout() -->
+    <bean id="casLogoutFilter" class="com.hys.login.manager.CasLogoutFilter">
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <!-- shiro的web过滤器,和web.xml中的filtername同名 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <!-- https://localhost:8443/login：cas服务器端登陆地址；
+        service=https://localhost:9443/cas：验证成功后的回调地址 -->
+        <property name="loginUrl" value="${cas.server}/login?service=${cas.client}/cas"/>
+        <!-- 登陆成功后返回的地址-->
+        <property name="successUrl" value="/"/>
+        <!-- 没有授权返回地址 -->
+        <property name="unauthorizedUrl" value="/" />
+        <!-- 自定义拦截器 -->
+        <property name="filters">
+            <util:map>
+                <entry key="authc" value-ref="formAuthenticationFilter"/>
+                <entry key="cas" value-ref="casFilter"/>
+                <entry key="logout" value-ref="logoutFilter"/>
+                <entry key="casLogout" value-ref="casLogoutFilter"/>
+            </util:map>
+        </property>
+        <!-- 定义url和filter的关系：格式 资源 = 过滤器 -->
+        <property name="filterChainDefinitions">
+            <value>
+                <!-- 匿名访问的资源 -->
+                /anonymous/** = anon
+                <!-- 登陆地址 -->
+                /login = authc
+                <!-- 拦截回调-->
+                /cas = casLogout,cas
+                <!-- 设置退出地址 -->
+                /logout = logout
+                <!-- 需要基于form表单身份认证后才能访问的资源（对cas记住我无效） -->
+                /money = authc
+                <!-- user：需要身份认证或RememberMe登录的都可以访问 -->
+                /** = casLogout,user
+            </value>
+        </property>
+    </bean>
+
+    <!-- 相当于调用SecurityUtils.setSecurityManager(securityManager) -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod" value="org.apache.shiro.SecurityUtils.setSecurityManager"/>
+        <property name="arguments" ref="securityManager"/>
+    </bean>
+
+    <!-- Shiro生命周期处理器-->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+</beans>

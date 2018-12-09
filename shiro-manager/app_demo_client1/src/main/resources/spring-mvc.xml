@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!-- 注解扫描 -->
+    <context:component-scan base-package="com.hys.**.manager"/>
+    <!-- 使用mvc注解声明 -->
+    <mvc:annotation-driven/>
+    <!-- 配置直接访问WEN-INF里的页面：例如：index.jsp -->
+    <mvc:view-controller path="/" view-name="index"/>
+    <!-- 处理静态资源(js,css,html) -->
+    <!--<mvc:resources mapping="/images/**" location="/images/" />-->
+    <mvc:default-servlet-handler/>
+
+    <!--===============通用视图解析器 begin===============-->
+    <!-- jsp解析器 -->
+    <bean id="defaultViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!--<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>-->
+        <property name="contentType" value="text/html;charset=UTF-8"></property>
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="order" value="0"/>
+    </bean>
+
+    <!--&lt;!&ndash; html解析器 &ndash;&gt;-->
+    <!--<bean id="htmlviewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">-->
+        <!--&lt;!&ndash; 可为空（解析所有类型的视图）,方便实现自已的依据扩展名来选择视图解释类 &ndash;&gt;-->
+        <!--<property name="viewClass" value="com.hys.html.tools.HtmlResourceView"></property>-->
+        <!--<property name="contentType" value="text/html;charset=UTF-8"></property>-->
+        <!--<property name="prefix" value="/WEB-INF/views/"/>-->
+        <!--<property name="suffix" value=".html"/>-->
+        <!--<property name="order" value="1"/>-->
+    <!--</bean>-->
+
+    <!--&lt;!&ndash; freeMarker解析器 &ndash;&gt;-->
+    <!--<bean id="viewResolverFtl" class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">-->
+        <!--<property name="viewClass" value="com.hys.freemarker.tools.FreeMarkerViewExtend"/>-->
+        <!--<property name="contentType" value="text/html;charset=utf-8"/>-->
+        <!--<property name="cache" value="true"/>-->
+        <!--<property name="prefix" value="/WEB-INF/views/"/>-->
+        <!--<property name="suffix" value=".ftl"/>-->
+        <!--<property name="order" value="2"/>-->
+    <!--</bean>-->
+    <!--===============通用视图解析器 end===============-->
+
+    <!-- 国际化配置start -->
+    <!-- 主要用于获取请求中的locale信息，将其转为Locale对像，获取LocaleResolver对象-->
+    <mvc:interceptors>
+        <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor"/>
+    </mvc:interceptors>
+
+    <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+        <!-- 表示语言配置文件是以language开头的文件（language_zh_CN.properties）-->
+        <property name="basename" value="language"/>
+        <!-- 语言区域里没有找到对应的国际化文件时，默认使用language.properties文件-->
+        <property name="useCodeAsDefaultMessage" value="true" />
+    </bean>
+
+    <!-- 配置SessionLocaleResolver用于将Locale对象存储于Session中供后续使用 -->
+    <bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver"/>
+    <!-- 国际化配置end -->
+
+    <!--  限制上传文件大小
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="104857600" />
+        <property name="maxInMemorySize" value="4096" />
+        <property name="defaultEncoding" value="UTF-8"></property>
+    </bean>
+    -->
+</beans>
