@@ -128,7 +128,7 @@
     <!-- 退出过滤器 -->
     <bean id="logoutFilter" class="org.apache.shiro.web.filter.authc.LogoutFilter">
         <!-- 退出后的重定向地址 -->
-        <property name="redirectUrl" value="${cas.server}/logout?service=${cas.client}" />
+        <property name="redirectUrl" value="${cas.server}/logout?service=${cas.client}/casLogout" />
     </bean>
 
     <!-- cas：拦截回调地址，验证ticket是否有效 -->
@@ -170,14 +170,14 @@
             <value>
                 <!-- 匿名访问的资源 -->
                 /anonymous/** = anon
-                <!-- 登陆地址 -->
-                /login = authc
+                <!-- 设置本地退出地址 -->
+                /logout = logout
+                <!-- 单点退出 -->
+                /casLogout = casLogout,user
                 <!-- 拦截回调-->
                 /cas = casLogout,cas
-                <!-- 设置退出地址 -->
-                /logout = logout
                 <!-- 需要基于form表单身份认证后才能访问的资源（对cas记住我无效） -->
-                /money = authc
+                /money = casLogout,authc
                 <!-- user：需要身份认证或RememberMe登录的都可以访问 -->
                 /** = casLogout,user
             </value>

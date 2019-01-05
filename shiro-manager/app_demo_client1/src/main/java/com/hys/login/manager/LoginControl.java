@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class LoginControl {
 
-    @RequestMapping("login")
+    @RequestMapping(value = {"login","casLogout"})
     public String login(HttpServletRequest request) throws Exception {
 
         String excaptionClassName = (String) request.getAttribute("shiroLoginFailure");
@@ -24,7 +24,7 @@ public class LoginControl {
             }else if (IncorrectCredentialsException.class.getName().equals(excaptionClassName)){
                 request.setAttribute("errormessage","密码错误");
             }else {
-                //throw new Exception();
+                throw new Exception();
             }
         }
 

@@ -36,8 +36,8 @@ public class CasLogoutFilter extends AdviceFilter {
     @Override
     protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest req = (HttpServletRequest)request;
-        if (HANDLER.isTokenRequest((HttpServletRequest)req)) {
-            //通过浏览器发送的请求，链接中含有token参数，记录token和sessionID
+        if (HANDLER.isTokenRequest((HttpServletRequest)req)) { // 判断是否是post请求
+            ///cas中央认证成功后，链接中含有token参数，记录token和sessionID
             HANDLER.recordSession(req);
             return true;
         } else if (HANDLER.isLogoutRequest(req)) {
@@ -51,6 +51,7 @@ public class CasLogoutFilter extends AdviceFilter {
         }
         Subject subject = SecurityUtils.getSubject();
         Session session = subject.getSession(false);
+        //用户访问时，判断session中是否做了退出标记，有则subject.logout退出
         if (session!=null&&session.getAttribute(HANDLER.getLogoutParameterName())!=null) {
             try {
                 subject.logout();

@@ -13,7 +13,6 @@
     <modules>
         <module>app_demo_client1</module>
         <module>app_demo_client2</module>
-        <!--<module>core_views</module>-->
     </modules>
 
     <properties>

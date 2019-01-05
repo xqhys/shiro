@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Licensed to Jasig under one or more contributor license
   ~ agreements. See the NOTICE file distributed with this work
@@ -37,6 +38,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.jasig.cas</groupId>
+      <artifactId>cas-server-integration-restlet</artifactId>
+      <version>${project.version}</version>
+      <type>jar</type>
+    </dependency>
+
+    <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
       <version>1.4</version>
@@ -54,12 +62,14 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-expression</artifactId>
       <version>${spring.version}</version>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>jstl</artifactId>
@@ -67,6 +77,7 @@
       <type>jar</type>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>taglibs</groupId>
       <artifactId>standard</artifactId>
@@ -74,6 +85,7 @@
       <type>jar</type>
       <scope>runtime</scope>
     </dependency>
+
   </dependencies>
 
   <build>
@@ -97,24 +109,15 @@
       </plugin>
 
       <plugin>
-        <groupId>org.mortbay.jetty</groupId>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
-        <version>8.1.8.v20121106</version>
+        <version>9.4.14.v20181114</version>
         <configuration>
+          <scanIntervalSeconds>10</scanIntervalSeconds>
+          <jettyXml>${project.basedir}/src/jetty/etc/jetty.xml,${project.basedir}/src/jetty/etc/jetty-http.xml,${project.basedir}/src/jetty/etc/jetty-ssl.xml,${project.basedir}/src/jetty/etc/jetty-https.xml</jettyXml>
           <webAppConfig>
             <contextPath>/cas-server</contextPath>
           </webAppConfig>
-          <connectors>
-            <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-              <port>8080</port>
-            </connector>
-            <!--<connector implementation="org.eclipse.jetty.server.ssl.SslSocketConnector">-->
-              <!--<port>8443</port>-->
-              <!--<keystore>${project.basedir}/localhost.wsriakey</keystore>-->
-              <!--<password>123456</password>-->
-              <!--<keyPassword>123456</keyPassword>-->
-            <!--</connector>-->
-          </connectors>
         </configuration>
       </plugin>
 
@@ -124,5 +127,6 @@
   <properties>
     <cs.dir>${project.basedir}</cs.dir>
   </properties>
+
 </project>
 
