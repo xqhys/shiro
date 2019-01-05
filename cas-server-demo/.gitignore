@@ -13,3 +13,4 @@ META-INF
 *.dependencies
 manifest.json
 /fmzg-timer-all/*.gitignore
+/cas.log.1
