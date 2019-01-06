@@ -31,13 +31,23 @@ public class CasLogoutFilter extends AdviceFilter {
      * @throws Exception if there is any error.
      */
     @Override
-    protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
+    protected boolean preHandle(ServletRequest request, ServletResponse response) {
         HttpServletRequest req = (HttpServletRequest)request;
         Subject subject = SecurityUtils.getSubject();
         Session session = subject.getSession(false);
 
+        // 用户访问时，判断session中是否做了退出标记，有则subject.logout退出
+        if (session != null && session.getAttribute(HANDLER.getLogoutParameterName()) != null) {
+            try {
+                subject.logout();
+            } catch (SessionException ise) {
+                log.debug("Encountered session exception during logout.  This can generally safely be ignored.", ise);
+            }
+            return true;
+        }
+
         // 判断是否含有token
-        if (HANDLER.isTokenRequest((HttpServletRequest)req) && session != null && session.getAttribute(HANDLER.getLogoutParameterName()) == null) {
+        if (HANDLER.isTokenRequest(req)) {
             // cas中央认证成功后，链接中含有token参数，记录token和sessionID
             HANDLER.recordSession(req);
             return true;
@@ -49,16 +59,8 @@ public class CasLogoutFilter extends AdviceFilter {
             return false;
         } else {
             log.trace("Ignoring URI " + req.getRequestURI());
+            return true;
         }
 
-        // 用户访问时，判断session中是否做了退出标记，有则subject.logout退出
-        if (session != null && session.getAttribute(HANDLER.getLogoutParameterName()) != null) {
-            try {
-                subject.logout();
-            } catch (SessionException ise) {
-                log.debug("Encountered session exception during logout.  This can generally safely be ignored.", ise);
-            }
-        }
-        return true;
     }
 }
