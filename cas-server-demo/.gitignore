@@ -14,3 +14,5 @@ META-INF
 manifest.json
 /fmzg-timer-all/*.gitignore
 /cas.log.1
+/cas.log.2
+/cas.log.3
