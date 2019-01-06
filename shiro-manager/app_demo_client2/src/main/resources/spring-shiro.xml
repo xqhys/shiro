@@ -117,7 +117,10 @@
     <bean id="formAuthenticationFilter" class="org.apache.shiro.web.filter.authc.FormAuthenticationFilter">
         <property name="usernameParam" value="username"/>
         <property name="passwordParam" value="password"/>
-        <!-- 登陆地址 -->
+        <!--
+        ${cas.server}/login：cas服务器端登陆地址；
+        ${cas.client}/cas：验证成功后的回调地址
+         -->
         <property name="loginUrl" value="${cas.server}/login?service=${cas.client}/cas"/>
         <!-- 成功页面 -->
         <property name="successUrl" value="/"/>
@@ -128,7 +131,7 @@
     <!-- 退出过滤器 -->
     <bean id="logoutFilter" class="org.apache.shiro.web.filter.authc.LogoutFilter">
         <!-- 退出后的重定向地址 -->
-        <property name="redirectUrl" value="${cas.server}/logout?service=${cas.client}/casLogout" />
+        <property name="redirectUrl" value="${cas.server}/logout?service=${cas.server}/login?service=${cas.client}/index.jsp" />
     </bean>
 
     <!-- cas：拦截回调地址，验证ticket是否有效 -->
@@ -138,6 +141,7 @@
         <!-- 开启cas过滤器 -->
         <property name="enabled" value="true"/>
     </bean>
+
     <!-- 单点退出：拦截回调地址；
     登陆成功后绑定ticket和session；
     单点退出时在session中设置退出标记；
@@ -149,8 +153,10 @@
     <!-- shiro的web过滤器,和web.xml中的filtername同名 -->
     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
         <property name="securityManager" ref="securityManager"/>
-        <!-- https://localhost:8443/login：cas服务器端登陆地址；
-        service=https://localhost:9443/cas：验证成功后的回调地址 -->
+        <!--
+        ${cas.server}/login：cas服务器端登陆地址；
+        ${cas.client}/cas：验证成功后的回调地址
+         -->
         <property name="loginUrl" value="${cas.server}/login?service=${cas.client}/cas"/>
         <!-- 登陆成功后返回的地址-->
         <property name="successUrl" value="/"/>
@@ -172,9 +178,7 @@
                 /anonymous/** = anon
                 <!-- 设置本地退出地址 -->
                 /logout = logout
-                <!-- 单点退出 -->
-                /casLogout = casLogout,user
-                <!-- 拦截回调-->
+                <!-- 拦截回调 -->
                 /cas = casLogout,cas
                 <!-- 需要基于form表单身份认证后才能访问的资源（对cas记住我无效） -->
                 /money = casLogout,authc

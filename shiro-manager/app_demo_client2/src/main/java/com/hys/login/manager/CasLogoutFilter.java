@@ -1,5 +1,4 @@
 package com.hys.login.manager;
-
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.SessionException;
@@ -8,7 +7,6 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.servlet.AdviceFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -17,12 +15,11 @@ public class CasLogoutFilter extends AdviceFilter {
 
     private static final Logger log = LoggerFactory.getLogger(CasLogoutFilter.class);
     private static final SingleSignOutHandler HANDLER = new SingleSignOutHandler();
-
     private SessionManager sessionManager;
-
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
+
     /**
      * 如果请求中包含了ticket参数，记录ticket和sessionID的映射
      * 如果请求中包含logoutRequest参数，标记session为无效
@@ -36,23 +33,26 @@ public class CasLogoutFilter extends AdviceFilter {
     @Override
     protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest req = (HttpServletRequest)request;
-        if (HANDLER.isTokenRequest((HttpServletRequest)req)) { // 判断是否是post请求
-            ///cas中央认证成功后，链接中含有token参数，记录token和sessionID
+        Subject subject = SecurityUtils.getSubject();
+        Session session = subject.getSession(false);
+
+        // 判断是否含有token
+        if (HANDLER.isTokenRequest((HttpServletRequest)req) && session != null && session.getAttribute(HANDLER.getLogoutParameterName()) == null) {
+            // cas中央认证成功后，链接中含有token参数，记录token和sessionID
             HANDLER.recordSession(req);
             return true;
         } else if (HANDLER.isLogoutRequest(req)) {
-            //cas服务器发送的请求，链接中含有logoutRequest参数，在之前记录的session中设置logoutRequest参数为true
-            //因为Subject是和线程是绑定的，所以无法获取登录的Subject直接logout
+            // cas服务器发送的请求，链接中含有logoutRequest参数，在之前记录的session中设置logoutRequest参数为true
+            // 因为Subject是和线程是绑定的，所以无法获取登录的Subject直接logout
             HANDLER.invalidateSession(req,sessionManager);
             // Do not continue up filter chain
             return false;
         } else {
             log.trace("Ignoring URI " + req.getRequestURI());
         }
-        Subject subject = SecurityUtils.getSubject();
-        Session session = subject.getSession(false);
-        //用户访问时，判断session中是否做了退出标记，有则subject.logout退出
-        if (session!=null&&session.getAttribute(HANDLER.getLogoutParameterName())!=null) {
+
+        // 用户访问时，判断session中是否做了退出标记，有则subject.logout退出
+        if (session != null && session.getAttribute(HANDLER.getLogoutParameterName()) != null) {
             try {
                 subject.logout();
             } catch (SessionException ise) {
