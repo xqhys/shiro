@@ -145,6 +145,8 @@
             <value>
                 <!-- 匿名访问的资源 -->
                 /anonymous/** = anon
+                /captcha/** = anon
+                /plugins/** = anon
                 <!-- 登陆提交地址 -->
                 /login = authc
                 <!-- 设置退出地址 -->

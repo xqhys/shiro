@@ -7,7 +7,7 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
 
-    <!--<import resource="shiro-jdbc.xml" />-->
-    <import resource="shiro-cas.xml" />
+    <import resource="shiro-jdbc.xml" />
+    <!--<import resource="shiro-cas.xml" />-->
 
 </beans>
